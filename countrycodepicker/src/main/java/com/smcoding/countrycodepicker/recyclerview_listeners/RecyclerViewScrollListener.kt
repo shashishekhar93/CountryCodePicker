@@ -1,6 +1,10 @@
-package com.smcoding.countrycodepicker.recyclerviewfastscroll
+package com.smcoding.countrycodepicker.recyclerview_listeners
 
 import androidx.recyclerview.widget.RecyclerView
+
+/**
+ * Listener that updates the [FastScroller] position as the [RecyclerView] is scrolled.
+ */
 class RecyclerViewScrollListener(private val scroller: FastScroller) : RecyclerView.OnScrollListener() {
 
     private val listeners = mutableListOf<ScrollerListener>()
@@ -12,9 +16,11 @@ class RecyclerViewScrollListener(private val scroller: FastScroller) : RecyclerV
 
     override fun onScrollStateChanged(recyclerView: RecyclerView, newScrollState: Int) {
         super.onScrollStateChanged(recyclerView, newScrollState)
-        if ((newScrollState == RecyclerView.SCROLL_STATE_IDLE) && (oldScrollState != RecyclerView.SCROLL_STATE_IDLE)) {
+        
+        // Check for start/finish of scroll event
+        if (newScrollState == RecyclerView.SCROLL_STATE_IDLE && oldScrollState != RecyclerView.SCROLL_STATE_IDLE) {
             scroller.viewProvider?.onScrollFinished()
-        } else if ((newScrollState != RecyclerView.SCROLL_STATE_IDLE) && (oldScrollState == RecyclerView.SCROLL_STATE_IDLE)) {
+        } else if (newScrollState != RecyclerView.SCROLL_STATE_IDLE && oldScrollState == RecyclerView.SCROLL_STATE_IDLE) {
             scroller.viewProvider?.onScrollStarted()
         }
         oldScrollState = newScrollState
@@ -26,26 +32,24 @@ class RecyclerViewScrollListener(private val scroller: FastScroller) : RecyclerV
         }
     }
 
+    /**
+     * Calculates the relative position of the scroll and updates the handle.
+     */
     fun updateHandlePosition(rv: RecyclerView) {
         val relativePos = if (scroller.isVertical) {
-            val offset = rv.computeVerticalScrollOffset()
-            val extent = rv.computeVerticalScrollExtent()
-            val range = rv.computeVerticalScrollRange()
-            val denom = range - extent
-            if (denom > 0) offset / denom.toFloat() else 0f
+            val denom = rv.computeVerticalScrollRange() - rv.computeVerticalScrollExtent()
+            if (denom > 0) rv.computeVerticalScrollOffset() / denom.toFloat() else 0f
         } else {
-            val offset = rv.computeHorizontalScrollOffset()
-            val extent = rv.computeHorizontalScrollExtent()
-            val range = rv.computeHorizontalScrollRange()
-            val denom = range - extent
-            if (denom > 0) offset / denom.toFloat() else 0f
+            val denom = rv.computeHorizontalScrollRange() - rv.computeHorizontalScrollExtent()
+            if (denom > 0) rv.computeHorizontalScrollOffset() / denom.toFloat() else 0f
         }
+        
         scroller.setScrollerPosition(relativePos)
         notifyListeners(relativePos)
     }
 
     private fun notifyListeners(relativePos: Float) {
-        for (listener in listeners) listener.onScroll(relativePos)
+        listeners.forEach { it.onScroll(relativePos) }
     }
 
     interface ScrollerListener {

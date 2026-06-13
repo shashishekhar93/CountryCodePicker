@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="test">#221224</color>
-    <color name="defaultContentColor">@android:color/black</color>
+    <color name="defaultContentColor">#1A1A1A</color>
     <color name="defaultBorderFlagColor">@android:color/transparent</color>
     <color name="pressed_bg">#64b7b7b7</color>
+
+    <color name="ccp_dialog_background">#FFFFFF</color>
+    <color name="ccp_dialog_text_primary">#1A1A1A</color>
+    <color name="ccp_dialog_text_secondary">#757575</color>
+    <color name="ccp_dialog_search_bg">#F5F5F5</color>
+    <color name="ccp_dialog_divider">#E0E0E0</color>
+    <color name="ccp_dialog_accent">#000000</color>
 </resources>
