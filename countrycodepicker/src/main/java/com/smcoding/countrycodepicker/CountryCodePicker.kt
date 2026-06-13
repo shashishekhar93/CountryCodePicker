@@ -3,9 +3,11 @@ package com.smcoding.countrycodepicker
 import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.res.TypedArray
 import android.graphics.Typeface
+import android.net.Uri
 import android.telephony.PhoneNumberUtils
 import android.telephony.TelephonyManager
 import android.text.Editable
@@ -212,6 +214,7 @@ class CountryCodePicker @JvmOverloads constructor(
     var failureListener: FailureListener? = null
     var dialogEventsListener: DialogEventsListener? = null
     var customDialogTextProvider: CustomDialogTextProvider? = null
+    var onRequestCountryListener: OnRequestCountryListener? = null
 
     // Internal state management
     private var validityTextWatcher: TextWatcher? = null
@@ -991,6 +994,17 @@ class CountryCodePicker @JvmOverloads constructor(
         CountryCodeDialog.openCountryCodeDialog(this, countryNameCode)
     }
 
+    /**
+     * Helper to set a functional listener for country requests.
+     */
+    fun setOnRequestCountryListener(listener: (String) -> Unit) {
+        this.onRequestCountryListener = object : OnRequestCountryListener {
+            override fun onRequestCountry(query: String) {
+                listener(query)
+            }
+        }
+    }
+
     override fun onDetachedFromWindow() {
         CountryCodeDialog.clear()
         super.onDetachedFromWindow()
@@ -1052,10 +1066,37 @@ class CountryCodePicker @JvmOverloads constructor(
         fun getCCPDialogNoResultACK(language: Language?, defaultNoResultACK: String?): String?
     }
 
+    interface OnRequestCountryListener {
+        fun onRequestCountry(query: String)
+    }
+
     companion object {
         const val DEFAULT_UNSET: Int = -99
         private const val TAG: String = "CCP"
         const val LIB_DEFAULT_COUNTRY_CODE: Int = 91
         private const val ANDROID_NAME_SPACE = "http://schemas.android.com/apk/res/android"
+    }
+}
+
+/**
+ * Extension to enable GitHub-based country requests.
+ */
+fun CountryCodePicker.enableGithubCountryRequests() {
+    setOnRequestCountryListener { countryName ->
+        val title = Uri.encode("Missing Country: $countryName")
+        val body = Uri.encode(
+            """
+            Country searched: $countryName
+            
+            Additional details:
+            """.trimIndent()
+        )
+
+        val url = "https://github.com/shashishekhar93/CountryCodePicker/issues/new?title=$title&body=$body"
+
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
     }
 }

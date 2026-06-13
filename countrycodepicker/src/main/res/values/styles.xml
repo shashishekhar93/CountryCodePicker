@@ -5,7 +5,7 @@
         <item name="android:windowExitAnimation">@anim/slide_out_bottom</item>
     </style>
 
-    <style name="CCPDialogTheme" parent="Theme.AppCompat.Light.Dialog">
+    <style name="CCPDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowAnimationStyle">@style/CCPDialogAnimation</item>

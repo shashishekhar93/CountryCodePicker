@@ -1,0 +1,37 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Circle -->
+    <path
+        android:fillColor="#F3F0FF"
+        android:pathData="M60,60m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0" />
+
+    <!-- Globe Outline -->
+    <path
+        android:strokeColor="#765BDC"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M60,25a35,35 0,1 0,0 70a35,35 0,1 0,0 -70" />
+
+    <!-- Globe Lines -->
+    <path
+        android:strokeColor="#765BDC"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M25,60h70M60,25v70M30,45c10,5 20,5 30,0s20,-5 30,0M30,75c10,-5 20,-5 30,0s20,5 30,0" />
+
+    <!-- Magnifying Glass -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#765BDC"
+        android:strokeWidth="3"
+        android:pathData="M85,85m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
+    <path
+        android:strokeColor="#765BDC"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M94,94l10,10" />
+</vector>
