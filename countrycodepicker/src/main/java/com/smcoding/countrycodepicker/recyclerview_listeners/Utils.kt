@@ -1,33 +1,42 @@
-package com.smcoding.countrycodepicker.recyclerviewfastscroll
+package com.smcoding.countrycodepicker.recyclerview_listeners
 
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.view.View
-import kotlin.math.max
-import kotlin.math.min
 
+/**
+ * Utility class for common view operations.
+ */
 object Utils {
+    /**
+     * Gets the raw Y position of a view in the window.
+     */
     fun getViewRawY(view: View): Float {
         val location = IntArray(2)
-        location[0] = 0
         location[1] = view.y.toInt()
-        (view.parent as View).getLocationInWindow(location)
+        (view.parent as? View)?.getLocationInWindow(location)
         return location[1].toFloat()
     }
 
+    /**
+     * Gets the raw X position of a view in the window.
+     */
     fun getViewRawX(view: View): Float {
         val location = IntArray(2)
         location[0] = view.x.toInt()
-        location[1] = 0
-        (view.parent as View).getLocationInWindow(location)
+        (view.parent as? View)?.getLocationInWindow(location)
         return location[0].toFloat()
     }
 
+    /**
+     * Clamps a value within a given range.
+     */
     fun getValueInRange(min: Float, max: Float, value: Float): Float {
-        val minimum = max(min, value)
-        return min(minimum, max)
+        return value.coerceIn(min, max)
     }
 
+    /**
+     * Sets the background of a view.
+     */
     fun setBackground(view: View, drawable: Drawable?) {
         view.background = drawable
     }

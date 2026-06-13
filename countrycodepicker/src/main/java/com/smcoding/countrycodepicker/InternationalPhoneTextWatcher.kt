@@ -2,62 +2,54 @@ package com.smcoding.countrycodepicker
 
 import android.content.Context
 import android.telephony.PhoneNumberUtils
+import android.util.Log
 import android.text.Editable
 import android.text.Selection
-import android.text.TextUtils
 import android.text.TextWatcher
 import io.michaelrocks.libphonenumber.android.AsYouTypeFormatter
 import io.michaelrocks.libphonenumber.android.PhoneNumberUtil
 
+/**
+ * TextWatcher that formats phone numbers as they are typed.
+ * It uses libphonenumber's [AsYouTypeFormatter] to provide correct formatting based on the selected country.
+ */
 class InternationalPhoneTextWatcher @JvmOverloads constructor(
     context: Context?,
     countryNameCode: String,
-    countryPhoneCode: Int,
-    internationalOnly: Boolean = true
+    private var countryPhoneCode: Int,
+    private val internationalOnly: Boolean = true
 ) : TextWatcher {
-    var phoneNumberUtil: PhoneNumberUtil
-
+    
+    private val phoneNumberUtil: PhoneNumberUtil = PhoneNumberUtil.createInstance(context)
+    private var mFormatter: AsYouTypeFormatter? = null
     private var mSelfChange = false
     private var mStopFormatting = false
-    private var mFormatter: AsYouTypeFormatter? = null
-    private var countryNameCode: String? = null
-    var lastFormatted: Editable? = null
-    private var countryPhoneCode = 0
-
-    //when country is changed, we update the number.
-    //at this point this will avoid "stopFormatting"
     private var needUpdateForCountryChange = false
-
-    private val internationalOnly: Boolean
+    private var lastFormatted: Editable? = null
 
     init {
-        require(!(countryNameCode == null || countryNameCode.isEmpty()))
-        phoneNumberUtil = PhoneNumberUtil.createInstance(context)
+        require(countryNameCode.isNotEmpty()) { "countryNameCode cannot be empty" }
         updateCountry(countryNameCode, countryPhoneCode)
-        this.internationalOnly = internationalOnly
     }
 
+    /**
+     * Updates the formatter for a new country.
+     */
     fun updateCountry(countryNameCode: String?, countryPhoneCode: Int) {
-        this.countryNameCode = countryNameCode
         this.countryPhoneCode = countryPhoneCode
         mFormatter = phoneNumberUtil.getAsYouTypeFormatter(countryNameCode)
         mFormatter?.clear()
-        if (lastFormatted != null) {
+        
+        lastFormatted?.let {
             needUpdateForCountryChange = true
-            val onlyDigits: String = PhoneNumberUtil.normalizeDigitsOnly(lastFormatted.toString())
-            lastFormatted!!.replace(0, lastFormatted!!.length, onlyDigits, 0, onlyDigits.length)
+            val onlyDigits = PhoneNumberUtil.normalizeDigitsOnly(it.toString())
+            it.replace(0, it.length, onlyDigits, 0, onlyDigits.length)
             needUpdateForCountryChange = false
         }
     }
 
-
-    override fun beforeTextChanged(
-        s: CharSequence, start: Int, count: Int,
-        after: Int
-    ) {
-        if (mSelfChange || mStopFormatting) {
-            return
-        }
+    override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
+        if (mSelfChange || mStopFormatting) return
         // If the user manually deleted any non-dialable characters, stop formatting
         if (count > 0 && hasSeparator(s, start, count) && !needUpdateForCountryChange) {
             stopFormatting()
@@ -65,9 +57,7 @@ class InternationalPhoneTextWatcher @JvmOverloads constructor(
     }
 
     override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-        if (mSelfChange || mStopFormatting) {
-            return
-        }
+        if (mSelfChange || mStopFormatting) return
         // If the user inserted any non-dialable characters, stop formatting
         if (count > 0 && hasSeparator(s, start, count)) {
             stopFormatting()
@@ -76,122 +66,88 @@ class InternationalPhoneTextWatcher @JvmOverloads constructor(
 
     override fun afterTextChanged(s: Editable) {
         if (mStopFormatting) {
-            // Restart the formatting when all texts were clear.
-            mStopFormatting = s.length != 0
+            mStopFormatting = s.isNotEmpty()
             return
         }
-        if (mSelfChange) {
-            // Ignore the change caused by s.replace().
-            return
-        }
+        if (mSelfChange) return
 
-        //calculate few things that will be helpful later
         val selectionEnd = Selection.getSelectionEnd(s)
         val isCursorAtEnd = (selectionEnd == s.length)
 
-        //get formatted text for this number
         val formatted = reformat(s)
 
-        //now calculate cursor position in formatted text
         var finalCursorPosition = 0
         if (formatted == s.toString()) {
-            //means there is no change while formatting don't move cursor
             finalCursorPosition = selectionEnd
         } else if (isCursorAtEnd) {
-            //if cursor was already at the end, put it at the end.
             finalCursorPosition = formatted.length
         } else {
-            // if no earlier case matched, we will use "digitBeforeCursor" way to figure out the cursor position
-
+            // Find the position of the digit that was before the cursor
             var digitsBeforeCursor = 0
-            for (i in 0..<s.length) {
-                if (i >= selectionEnd) {
-                    break
-                }
-                if (PhoneNumberUtils.isNonSeparator(s.get(i))) {
-                    digitsBeforeCursor++
-                }
+            for (i in 0 until selectionEnd) {
+                if (PhoneNumberUtils.isNonSeparator(s[i])) digitsBeforeCursor++
             }
 
-            //at this point we will have digitsBeforeCursor calculated.
-            // now find this position in formatted text
-            var i = 0
             var digitPassed = 0
-            while (i < formatted.length) {
+            for (i in formatted.indices) {
                 if (digitPassed == digitsBeforeCursor) {
                     finalCursorPosition = i
                     break
                 }
-                if (PhoneNumberUtils.isNonSeparator(formatted.get(i))) {
-                    digitPassed++
-                }
-                i++
+                if (PhoneNumberUtils.isNonSeparator(formatted[i])) digitPassed++
             }
         }
 
-        //if this ends right before separator, we might wish to move it further so user do not delete separator by mistake.
-        // because deletion of separator will cause stop formatting that should not happen by mistake
+        // Avoid placing cursor right before a separator
         if (!isCursorAtEnd) {
-            while (0 < finalCursorPosition - 1 && !PhoneNumberUtils.isNonSeparator(
-                    formatted.get(
-                        finalCursorPosition - 1
-                    )
-                )
-            ) {
+            while (finalCursorPosition > 0 && !PhoneNumberUtils.isNonSeparator(formatted[finalCursorPosition - 1])) {
                 finalCursorPosition--
             }
         }
 
-        //Now we have everything calculated, set this values in
         try {
-            if (formatted != null) {
-                mSelfChange = true
-                s.replace(0, s.length, formatted, 0, formatted.length)
-                mSelfChange = false
-                lastFormatted = s
-                Selection.setSelection(s, finalCursorPosition)
-            }
+            mSelfChange = true
+            s.replace(0, s.length, formatted, 0, formatted.length)
+            mSelfChange = false
+            lastFormatted = s
+            Selection.setSelection(s, finalCursorPosition)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error in afterTextChanged", e)
         }
     }
+
     private fun reformat(s: CharSequence): String {
-        var s = s
-        var internationalFormatted = ""
+        var sequence = s
         mFormatter?.clear()
-        var lastNonSeparator = 0.toChar()
+        
+        val countryCallingCode = "+$countryPhoneCode"
+        val shouldAddCode = internationalOnly || (sequence.isNotEmpty() && sequence[0] != '0')
+        
+        if (shouldAddCode) sequence = countryCallingCode + sequence
+        
+        var formatted = ""
+        var lastChar = 0.toChar()
 
-        val countryCallingCode = "+" + countryPhoneCode
-
-        if (internationalOnly || (s.length > 0 && s.get(0) != '0'))  //to have number formatted as international format, add country code before that
-            s = countryCallingCode + s
-        val len = s.length
-
-        for (i in 0..<len) {
-            val c = s.get(i)
+        for (c in sequence) {
             if (PhoneNumberUtils.isNonSeparator(c)) {
-                if (lastNonSeparator.code != 0) {
-                    internationalFormatted = mFormatter!!.inputDigit(lastNonSeparator)
-                }
-                lastNonSeparator = c
+                if (lastChar.code != 0) formatted = mFormatter!!.inputDigit(lastChar)
+                lastChar = c
             }
         }
-        if (lastNonSeparator.code != 0) {
-            internationalFormatted = mFormatter!!.inputDigit(lastNonSeparator)
-        }
+        if (lastChar.code != 0) formatted = mFormatter!!.inputDigit(lastChar)
 
-        internationalFormatted = internationalFormatted.trim { it <= ' ' }
-        if (internationalOnly || (s.length == 0 || s.get(0) != '0')) {
-            if (internationalFormatted.length > countryCallingCode.length) {
-                if (internationalFormatted.get(countryCallingCode.length) == ' ') internationalFormatted =
-                    internationalFormatted.substring(countryCallingCode.length + 1)
-                else internationalFormatted =
-                    internationalFormatted.substring(countryCallingCode.length)
+        formatted = formatted.trim()
+        
+        if (shouldAddCode) {
+            if (formatted.length > countryCallingCode.length) {
+                val offset = if (formatted.getOrNull(countryCallingCode.length) == ' ') 1 else 0
+                formatted = formatted.substring(countryCallingCode.length + offset)
             } else {
-                internationalFormatted = ""
+                formatted = ""
             }
         }
-        return if (TextUtils.isEmpty(internationalFormatted)) "" else internationalFormatted
+        
+        return formatted
     }
 
     private fun stopFormatting() {
@@ -200,16 +156,13 @@ class InternationalPhoneTextWatcher @JvmOverloads constructor(
     }
 
     private fun hasSeparator(s: CharSequence, start: Int, count: Int): Boolean {
-        for (i in start..<start + count) {
-            val c = s.get(i)
-            if (!PhoneNumberUtils.isNonSeparator(c)) {
-                return true
-            }
+        for (i in start until start + count) {
+            if (!PhoneNumberUtils.isNonSeparator(s[i])) return true
         }
         return false
     }
 
     companion object {
-        private const val TAG = "Int'l Phone TextWatcher"
+        private const val TAG = "IntlPhoneTextWatcher"
     }
 }

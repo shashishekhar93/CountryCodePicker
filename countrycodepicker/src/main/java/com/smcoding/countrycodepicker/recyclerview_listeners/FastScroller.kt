@@ -1,20 +1,23 @@
-package com.smcoding.countrycodepicker.recyclerviewfastscroll
+package com.smcoding.countrycodepicker.recyclerview_listeners
 
 import android.content.Context
 import android.content.res.TypedArray
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.widget.TextViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.smcoding.countrycodepicker.R
-import com.smcoding.countrycodepicker.recyclerviewfastscroll.viewprovider.DefaultScrollerViewProvider
-import com.smcoding.countrycodepicker.recyclerviewfastscroll.viewprovider.ScrollerViewProvider
+import com.smcoding.countrycodepicker.recyclerview_listeners.viewprovider.DefaultScrollerViewProvider
+import com.smcoding.countrycodepicker.recyclerview_listeners.viewprovider.ScrollerViewProvider
 
+/**
+ * A custom view that provides fast scrolling capabilities for a [RecyclerView].
+ * It displays a handle that can be dragged and an optional bubble that shows the current section.
+ */
 class FastScroller @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -32,9 +35,9 @@ class FastScroller @JvmOverloads constructor(
     private var handleColor = 0
     private var bubbleColor = 0
     private var bubbleTextAppearance = 0
-    private var scrollerOrientation = 0
+    private var scrollerOrientation = VERTICAL
 
-    private var maxVisibility: Int
+    private var maxVisibility: Int = visibility
     private var manuallyChangingPosition = false
 
     var viewProvider: ScrollerViewProvider? = null
@@ -43,34 +46,19 @@ class FastScroller @JvmOverloads constructor(
 
     init {
         clipChildren = false
-        val style: TypedArray = context.obtainStyledAttributes(
-            attrs,
-            R.styleable.fastscroll__fastScroller,
-            R.attr.fastscroll__style,
-            0
-        )
+        val style: TypedArray = context.obtainStyledAttributes(attrs, R.styleable.FastScroller, R.attr.fastscroll__style, 0)
         try {
-            bubbleColor = style.getColor(
-                R.styleable.fastscroll__fastScroller_fastscroll__bubbleColor,
-                STYLE_NONE
-            )
-            handleColor = style.getColor(
-                R.styleable.fastscroll__fastScroller_fastscroll__handleColor,
-                STYLE_NONE
-            )
-            bubbleTextAppearance = style.getResourceId(
-                R.styleable.fastscroll__fastScroller_fastscroll__bubbleTextAppearance,
-                STYLE_NONE
-            )
+            bubbleColor = style.getColor(R.styleable.FastScroller_fastscroll__bubbleColor, STYLE_NONE)
+            handleColor = style.getColor(R.styleable.FastScroller_fastscroll__handleColor, STYLE_NONE)
+            bubbleTextAppearance = style.getResourceId(R.styleable.FastScroller_fastscroll__bubbleTextAppearance, STYLE_NONE)
         } finally {
             style.recycle()
         }
-        maxVisibility = visibility
         setViewProvider(DefaultScrollerViewProvider())
     }
 
     /**
-     * Attach the [FastScroller] to [RecyclerView].
+     * Attaches the [FastScroller] to a [RecyclerView].
      */
     fun setRecyclerView(recyclerView: RecyclerView) {
         this.recyclerView = recyclerView
@@ -79,19 +67,16 @@ class FastScroller @JvmOverloads constructor(
         }
         recyclerView.addOnScrollListener(scrollListener)
         invalidateVisibility()
+        
         recyclerView.setOnHierarchyChangeListener(object : OnHierarchyChangeListener {
-            override fun onChildViewAdded(parent: View?, child: View?) {
-                invalidateVisibility()
-            }
-
-            override fun onChildViewRemoved(parent: View?, child: View?) {
-                invalidateVisibility()
-            }
+            override fun onChildViewAdded(parent: View?, child: View?) = invalidateVisibility()
+            override fun onChildViewRemoved(parent: View?, child: View?) = invalidateVisibility()
         })
     }
 
     override fun setOrientation(orientation: Int) {
         scrollerOrientation = orientation
+        // FastScroller layout orientation is opposite to scroller direction
         super.setOrientation(if (orientation == HORIZONTAL) VERTICAL else HORIZONTAL)
     }
 
@@ -117,7 +102,7 @@ class FastScroller @JvmOverloads constructor(
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
 
-        initHandleMovement()
+        setupHandleTouchListener()
         bubbleOffset = viewProvider?.bubbleOffset ?: 0
 
         applyStyling()
@@ -131,36 +116,36 @@ class FastScroller @JvmOverloads constructor(
         bubbleTextView?.let { if (bubbleColor != STYLE_NONE) setBackgroundTint(it, bubbleColor) }
         handle?.let { if (handleColor != STYLE_NONE) setBackgroundTint(it, handleColor) }
         bubbleTextView?.let {
-            if (bubbleTextAppearance != STYLE_NONE) {
-                TextViewCompat.setTextAppearance(it, bubbleTextAppearance)
-            }
+            if (bubbleTextAppearance != STYLE_NONE) TextViewCompat.setTextAppearance(it, bubbleTextAppearance)
         }
     }
 
     private fun setBackgroundTint(view: View, color: Int) {
-        val background = view.background ?: return
-        val wrapped = DrawableCompat.wrap(background)
-        DrawableCompat.setTint(wrapped.mutate(), color)
-        Utils.setBackground(view, wrapped)
+        view.background?.let {
+            val wrapped = DrawableCompat.wrap(it)
+            DrawableCompat.setTint(wrapped.mutate(), color)
+            Utils.setBackground(view, wrapped)
+        }
     }
 
-    private fun initHandleMovement() {
-        handle?.setOnTouchListener { _, event ->
+    private fun setupHandleTouchListener() {
+        handle?.setOnTouchListener { v, event ->
             parent.requestDisallowInterceptTouchEvent(true)
             when (event.action) {
                 MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                    if (titleProvider != null && event.action == MotionEvent.ACTION_DOWN) {
-                        viewProvider?.onHandleGrabbed()
-                    }
+                    if (event.action == MotionEvent.ACTION_DOWN) viewProvider?.onHandleGrabbed()
                     manuallyChangingPosition = true
                     val relativePos = getRelativeTouchPosition(event)
                     setScrollerPosition(relativePos)
                     setRecyclerViewPosition(relativePos)
                     true
                 }
-                MotionEvent.ACTION_UP -> {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     manuallyChangingPosition = false
-                    if (titleProvider != null) viewProvider?.onHandleReleased()
+                    viewProvider?.onHandleReleased()
+                    if (event.action == MotionEvent.ACTION_UP) {
+                        v.performClick()
+                    }
                     true
                 }
                 else -> false
@@ -185,9 +170,9 @@ class FastScroller @JvmOverloads constructor(
     }
 
     private fun invalidateVisibility() {
-        val adapter = recyclerView?.adapter
-        if (adapter == null || adapter.itemCount == 0 || recyclerView?.getChildAt(0) == null ||
-            isRecyclerViewNotScrollable() || maxVisibility != View.VISIBLE
+        val rv = recyclerView
+        if (rv == null || rv.adapter == null || rv.adapter!!.itemCount == 0 || 
+            rv.getChildAt(0) == null || isRecyclerViewNotScrollable() || maxVisibility != View.VISIBLE
         ) {
             super.setVisibility(View.INVISIBLE)
         } else {
@@ -208,19 +193,19 @@ class FastScroller @JvmOverloads constructor(
 
     private fun setRecyclerViewPosition(relativePos: Float) {
         val rv = recyclerView ?: return
-        val adapter = rv.adapter ?: return
-        val itemCount = adapter.itemCount
-        val targetPos = Utils.getValueInRange(
-            0f,
-            (itemCount - 1).toFloat(),
-            (relativePos * itemCount).toInt().toFloat()
-        ).toInt()
+        val itemCount = rv.adapter?.itemCount ?: 0
+        val targetPos = Utils.getValueInRange(0f, (itemCount - 1).toFloat(), (relativePos * itemCount)).toInt()
+        
         rv.scrollToPosition(targetPos)
         titleProvider?.let {
             bubbleTextView?.text = it.getSectionTitle(targetPos)
         }
     }
 
+    /**
+     * Updates the position of the bubble and handle.
+     * @param relativePos A value between 0 and 1 representing the scroll position.
+     */
     fun setScrollerPosition(relativePos: Float) {
         val b = bubble ?: return
         val h = handle ?: return
@@ -237,10 +222,12 @@ class FastScroller @JvmOverloads constructor(
         get() = scrollerOrientation == VERTICAL
 
     fun shouldUpdateHandlePosition(): Boolean {
-        val rv = recyclerView
-        return handle != null && !manuallyChangingPosition && rv != null && rv.childCount > 0
+        return handle != null && !manuallyChangingPosition && (recyclerView?.childCount ?: 0) > 0
     }
 
+    /**
+     * Sets the view provider that creates the handle and bubble views.
+     */
     fun setViewProvider(viewProvider: ScrollerViewProvider) {
         removeAllViews()
         this.viewProvider = viewProvider
