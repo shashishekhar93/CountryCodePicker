@@ -155,10 +155,6 @@ class InternationalPhoneTextWatcher @JvmOverloads constructor(
             e.printStackTrace()
         }
     }
-
-    /**
-     * this will format the number in international format (only).
-     */
     private fun reformat(s: CharSequence): String {
         var s = s
         var internationalFormatted = ""
