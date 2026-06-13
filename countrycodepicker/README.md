@@ -2,6 +2,37 @@
 
 CountryCodePicker (CCP) is an efficient Android library which provides an easy way to search and select country phone code for a telephone number.
 
+## Screenshots
+
+<!-- Add your screenshots here -->
+
+## Installation
+
+To get a Git project into your build using [JitPack](https://jitpack.io):
+
+### Step 1. Add the JitPack repository
+Add it in your `settings.gradle.kts` at the end of repositories:
+
+```kotlin
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+```
+
+### Step 2. Add the dependency
+Add the following to your app module's `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("com.github.shashishekhar93:CountryCodePicker:1.0.1")
+}
+```
+
 ## Features
 *   **Easy to use**: Simple integration via XML or Kotlin/Java.
 *   **Automatic Formatting**: Automatically formats phone numbers as you type.

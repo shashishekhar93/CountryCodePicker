@@ -40,7 +40,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":countrycodepicker"))
+    //implementation(project(":countrycodepicker"))
+    implementation("com.github.shashishekhar93:CountryCodePicker:1.0.1")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
