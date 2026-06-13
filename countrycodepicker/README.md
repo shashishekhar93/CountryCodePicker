@@ -1,10 +1,21 @@
+![API](https://img.shields.io/badge/API-24%2B-brightgreen)
+![License](https://img.shields.io/badge/License-Apache%202.0-blue)
+![JitPack](https://jitpack.io/v/shashishekhar93/CountryCodePicker.svg)
+
 # CountryCodePicker
 
 CountryCodePicker (CCP) is an efficient Android library which provides an easy way to search and select country phone code for a telephone number.
 
 ## Screenshots
+<table>
+  <tr>
+    <td><img width="200" height="444" alt="1" src="https://github.com/user-attachments/assets/dc9af057-82cb-4d9a-b2e0-a23c70d31e5d" /></td>
+    <td><img width="200" height="444" alt="2" src="https://github.com/user-attachments/assets/11d69f37-61a8-4520-b620-fb07fd0bca70" /></td>
+    <td><img width="200" height="444" alt="3" src="https://github.com/user-attachments/assets/0afe7d71-a417-4b5c-a22c-0b337aca03dc" /></td>
+  </tr>
+</table>
 
-<!-- Add your screenshots here -->
+
 
 ## Installation
 
