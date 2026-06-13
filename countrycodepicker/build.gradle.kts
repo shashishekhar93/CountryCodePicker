@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
+    id("maven-publish")
 }
 
 android {
@@ -24,6 +25,26 @@ android {
     buildFeatures{
         buildConfig = true
         viewBinding = true
+    }
+    publishing{
+        singleVariant("release"){
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            register<MavenPublication>("release"){
+                groupId = "com.smcoding"
+                artifactId = "countrycodepicker"
+                version = "1.0.0"
+
+                from(components["release"])
+            }
+        }
     }
 }
 
