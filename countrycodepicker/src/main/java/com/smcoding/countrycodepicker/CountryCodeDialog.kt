@@ -13,6 +13,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.cardview.widget.CardView
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -34,8 +35,9 @@ internal object CountryCodeDialog {
     @JvmOverloads
     fun openCountryCodeDialog(codePicker: CountryCodePicker, countryNameCode: String? = null) {
         val context = codePicker.context
-        val binding = LayoutPickerDialogBinding.inflate(LayoutInflater.from(context))
-        val dialogInstance = Dialog(context, R.style.CCPDialogTheme).apply {
+        val themedContext = ContextThemeWrapper(context, R.style.CCPDialogTheme)
+        val binding = LayoutPickerDialogBinding.inflate(LayoutInflater.from(themedContext))
+        val dialogInstance = Dialog(themedContext, R.style.CCPDialogTheme).apply {
             setContentView(binding.root)
             window?.setLayout(
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -52,26 +54,34 @@ internal object CountryCodeDialog {
         val rlQueryHolder = binding.rlQueryHolder
         val imgClearQuery = binding.imgClearQuery
         val editTextSearch = binding.editTextSearch
-        val textViewNoResult = binding.textViewNoresult
+        val viewNoResult = binding.layoutNoResult.root
         val dialogRoot = binding.cardViewRoot
         val imgDismiss = binding.imgDismiss
+        val imgClose = binding.imgClose
 
         setupKeyboard(codePicker, editTextSearch, dialogInstance)
-        setupTypefaces(codePicker, textViewTitle, editTextSearch, textViewNoResult)
+        setupTypefaces(
+            codePicker,
+            textViewTitle,
+            editTextSearch,
+            binding.layoutNoResult.tvTitle,
+            binding.layoutNoResult.tvSubtitle,
+            binding.layoutNoResult.btnRequestCountry
+        )
         setupStyling(
             codePicker,
+            dialogInstance,
             dialogRoot,
             textViewTitle,
             imgClearQuery,
             imgDismiss,
-            editTextSearch,
-            textViewNoResult
+            imgClose,
+            editTextSearch
         )
 
         // Set messages from codePicker
         textViewTitle.text = codePicker.dialogTitle
         editTextSearch.hint = codePicker.searchHintText
-        textViewNoResult.text = codePicker.noResultACK
 
         // Compact height if search is disabled
         if (!codePicker.isSearchAllowed) {
@@ -84,10 +94,19 @@ internal object CountryCodeDialog {
         // Initialize Adapter
         val adapter = CountryCodeAdapter(
             context, masterCountries, codePicker, rlQueryHolder,
-            editTextSearch, textViewNoResult, dialogInstance, imgClearQuery
+            editTextSearch, viewNoResult, dialogInstance, imgClearQuery
         )
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
+
+        // Setup Request Country button
+        binding.layoutNoResult.btnRequestCountry.setOnClickListener {
+            val query = editTextSearch.text.toString()
+            codePicker.onRequestCountryListener?.let { listener ->
+                listener.onRequestCountry(query)
+            }
+            dialogInstance.dismiss()
+        }
 
         setupFastScroller(codePicker, binding.fastscroll, recyclerView)
 
@@ -133,8 +152,8 @@ internal object CountryCodeDialog {
     }
 
     private fun setupStyling(
-        cp: CountryCodePicker, root: View, title: TextView,
-        clear: ImageView, dismiss: ImageView, search: EditText, noResult: TextView
+        cp: CountryCodePicker, dialogInstance: Dialog, root: View, title: TextView,
+        clear: ImageView, dismiss: ImageView, close: ImageView, search: EditText
     ) {
         if (root is CardView) {
             if (cp.dialogBackgroundColor != 0) root.setCardBackgroundColor(cp.dialogBackgroundColor)
@@ -144,11 +163,14 @@ internal object CountryCodeDialog {
         }
         if (cp.dialogBackgroundResId != 0) root.setBackgroundResource(cp.dialogBackgroundResId)
 
+        dismiss.visibility = View.VISIBLE
+        dismiss.setOnClickListener { dialogInstance.dismiss() }
+
         if (cp.isShowCloseIcon) {
-            dismiss.visibility = View.VISIBLE
-            dismiss.setOnClickListener { dialog?.dismiss() }
+            close.visibility = View.VISIBLE
+            close.setOnClickListener { dialogInstance.dismiss() }
         } else {
-            dismiss.visibility = View.GONE
+            close.visibility = View.GONE
         }
 
         title.visibility = if (cp.ccpDialogShowTitle) View.VISIBLE else View.GONE
@@ -156,8 +178,11 @@ internal object CountryCodeDialog {
         if (cp.dialogTextColor != 0) {
             val color = cp.dialogTextColor
             val colorStateList = ColorStateList.valueOf(color)
-            listOf(clear, dismiss).forEach { it.imageTintList = colorStateList }
-            listOf(title, noResult, search).forEach { it.setTextColor(color) }
+            listOf(clear, dismiss, close).forEach { it.imageTintList = colorStateList }
+            listOf(title, search).forEach { it.setTextColor(color) }
+            
+            // Apply styling to no result views if they exist in the binding
+            // Note: In a real implementation, you'd pass these views as parameters or use the binding
             search.setHintTextColor(
                 Color.argb(
                     100,

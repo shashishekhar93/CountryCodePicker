@@ -11,7 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:orientation="horizontal"
         android:padding="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -126,15 +125,13 @@
         app:layout_constraintEnd_toEndOf="@id/recycler_countryDialog"
         app:layout_constraintTop_toTopOf="@id/recycler_countryDialog" />
 
-    <TextView
-        android:id="@+id/textView_noresult"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:fontFamily="@font/outfit_regular"
-        android:text="@string/no_result_found"
-        android:textColor="@color/ccp_dialog_text_primary"
+    <include
+        android:id="@+id/layout_no_result"
+        layout="@layout/layout_code_not_found"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/divider_section" />

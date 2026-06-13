@@ -6,4 +6,8 @@
     <string name="close_button_content_description">Close</string>
     <string name="clear_search_button_content_description">Clear search</string>
     <string name="ccp_phone_code_format">+%1$s</string>
+    <string name="ccp_no_country_title">Can\'t find your country?</string>
+    <string name="ccp_no_country_subtitle">Try searching using the country name, ISO code (e.g. IN, US), or dialing code (+91, +1).</string>
+    <string name="ccp_no_country_chip">No matching countries found</string>
+    <string name="ccp_request_country">Request Country</string>
 </resources>

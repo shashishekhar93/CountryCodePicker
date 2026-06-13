@@ -33,7 +33,7 @@ internal class CountryCodeAdapter(
     private val codePicker: CountryCodePicker,
     private val rlQueryHolder: RelativeLayout,
     private val editTextSearch: EditText?,
-    private val textViewNoResult: TextView,
+    private val viewNoResult: View,
     private val dialog: Dialog,
     private val imgClearQuery: ImageView
 ) : RecyclerView.Adapter<CountryCodeAdapter.CountryCodeViewHolder>(), SectionTitleProvider {
@@ -95,7 +95,7 @@ internal class CountryCodeAdapter(
      */
     @SuppressLint("NotifyDataSetChanged")
     private fun applyQuery(query: String) {
-        textViewNoResult.visibility = View.GONE
+        viewNoResult.visibility = View.GONE
         var cleanQuery = query.lowercase(Locale.getDefault())
 
         if (cleanQuery.isNotEmpty() && cleanQuery[0] == '+') {
@@ -105,7 +105,7 @@ internal class CountryCodeAdapter(
         filteredCountries = getFilteredCountries(cleanQuery)
 
         if (filteredCountries.isEmpty()) {
-            textViewNoResult.visibility = View.VISIBLE
+            viewNoResult.visibility = View.VISIBLE
         }
         notifyDataSetChanged()
     }
