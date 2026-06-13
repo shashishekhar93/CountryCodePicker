@@ -43,7 +43,7 @@ class DefaultScrollerViewProvider : ScrollerViewProvider() {
 
     override fun provideBubbleView(container: ViewGroup?): View? {
         val context = context ?: return null
-        bubble = LayoutInflater.from(context).inflate(R.layout.fastscroll__default_bubble, container, false)
+        bubble = LayoutInflater.from(context).inflate(R.layout.custom_scrollbar, container, false)
         return bubble
     }
 

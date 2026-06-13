@@ -55,6 +55,7 @@ internal object CountryCodeDialog {
         val textViewNoResult = binding.textViewNoresult
         val dialogRoot = binding.cardViewRoot
         val imgDismiss = binding.imgDismiss
+        val imgClose = binding.imgClose
 
         setupKeyboard(codePicker, editTextSearch, dialogInstance)
         setupTypefaces(codePicker, textViewTitle, editTextSearch, textViewNoResult)
@@ -64,6 +65,7 @@ internal object CountryCodeDialog {
             textViewTitle,
             imgClearQuery,
             imgDismiss,
+            imgClose,
             editTextSearch,
             textViewNoResult
         )
@@ -134,7 +136,7 @@ internal object CountryCodeDialog {
 
     private fun setupStyling(
         cp: CountryCodePicker, root: View, title: TextView,
-        clear: ImageView, dismiss: ImageView, search: EditText, noResult: TextView
+        clear: ImageView, dismiss: ImageView, close: ImageView, search: EditText, noResult: TextView
     ) {
         if (root is CardView) {
             if (cp.dialogBackgroundColor != 0) root.setCardBackgroundColor(cp.dialogBackgroundColor)
@@ -144,11 +146,14 @@ internal object CountryCodeDialog {
         }
         if (cp.dialogBackgroundResId != 0) root.setBackgroundResource(cp.dialogBackgroundResId)
 
+        dismiss.visibility = View.VISIBLE
+        dismiss.setOnClickListener { dialog?.dismiss() }
+
         if (cp.isShowCloseIcon) {
-            dismiss.visibility = View.VISIBLE
-            dismiss.setOnClickListener { dialog?.dismiss() }
+            close.visibility = View.VISIBLE
+            close.setOnClickListener { dialog?.dismiss() }
         } else {
-            dismiss.visibility = View.GONE
+            close.visibility = View.GONE
         }
 
         title.visibility = if (cp.ccpDialogShowTitle) View.VISIBLE else View.GONE
@@ -156,7 +161,7 @@ internal object CountryCodeDialog {
         if (cp.dialogTextColor != 0) {
             val color = cp.dialogTextColor
             val colorStateList = ColorStateList.valueOf(color)
-            listOf(clear, dismiss).forEach { it.imageTintList = colorStateList }
+            listOf(clear, dismiss, close).forEach { it.imageTintList = colorStateList }
             listOf(title, noResult, search).forEach { it.setTextColor(color) }
             search.setHintTextColor(
                 Color.argb(

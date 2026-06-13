@@ -237,7 +237,7 @@ class CountryCodePicker @JvmOverloads constructor(
         val isFullWidth =
             xmlWidth != null && (xmlWidth == LayoutParams.MATCH_PARENT.toString() || xmlWidth == "fill_parent" || xmlWidth == "match_parent")
         val layoutRes =
-            if (isFullWidth) R.layout.layout_full_width_code_picker else R.layout.layout_code_picker
+            if (isFullWidth) R.layout.layout_full_width_code_picker else R.layout.item_country_code
 
         holderView = inflater.inflate(layoutRes, this, true)
         textViewSelectedCountry = holderView?.findViewById(R.id.textView_selectedCountry)
